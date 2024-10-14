@@ -1,10 +1,11 @@
 import os
 import google.generativeai as genai
 from google.ai.generativelanguage_v1beta.types import content
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import sys
 
 custom_module_path = os.path.abspath(os.path.join('secrets'))
-sys.path.append(module_path)
+sys.path.append(custom_module_path)
 
 import gemini_api_key as gemini_secs 
 # gemini_api_key = os.environ["GEMINI_API_KEY"]
@@ -54,7 +55,7 @@ model = genai.GenerativeModel(
   model_name="gemini-1.5-flash",
   generation_config=generation_config,
   safety_settings={
-        HarmCategory.HARM_CATEGORY_DANGEROUS: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
     }
   # See https://ai.google.dev/gemini-api/docs/safety-settings
 )
@@ -67,4 +68,4 @@ def get_purified_articles(raw_articels):
     response = chat_session.send_message(prompt + str(raw_articels))
     return response.text
 
-print(response.text)
+# print(response.text)

@@ -7,7 +7,7 @@ import logging
 import sys 
 
 custom_module_path = os.path.abspath(os.path.join('secrets'))
-sys.path.append(module_path)
+sys.path.append(custom_module_path)
 
 import cosmocloud_api_details as cosmo_secs
 from purifier import get_purified_articles
@@ -67,15 +67,35 @@ postURL = "https://free-ap-south-1.cosmocloud.io/development/api/articles_raw"
 #     print("Raw article size: ", len(payloads))
 
 
+import json
 @app.route("/")
 def run_scraper():
   print("Loading...")
   raw_articels = get_raw_articles()
-  purified_articles = get_purified_articles(raw_articels)
-  print(purified_articles)
+  raw_articels_chunks = []
+  n = len(raw_articels)
+  for i in range(n):
+    if i+4 <= n-1:
+      raw_articels_chunks.append(raw_articels[i:i+5])
+    else:
+      raw_articels_chunks.append(raw_articels[i:])
+    i += 5
+
+  purified_articles = []
+  
+  for raw_article_chunk in raw_articels_chunks:
+    purified_articles.append(get_purified_articles(raw_article_chunk))
+  
+  # get_purified_articles(raw_articels)
+  # print(purified_articles)
+  with open('purified_articles.json', 'w') as f:
+    print(purified_articles[0])
+    for purified_article in purified_articles:
+      json.dump(purified_article, f)
+  
   # name = os.environ.get("NAME", "World")
   # return f"Hello {name}!"
 
 if __name__ == "__main__":
   run_scraper()
-  app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
+  # app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
