@@ -91,7 +91,7 @@ def run_scraper():
   with open('purified_articles.json', 'w') as f:
     print(purified_articles[0])
     for purified_article in purified_articles:
-      json.dump(purified_article, f)
+      json.dump(purified_article.to_dict(), f)
   
   # name = os.environ.get("NAME", "World")
   # return f"Hello {name}!"
