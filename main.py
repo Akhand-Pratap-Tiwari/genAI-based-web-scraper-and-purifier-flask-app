@@ -9,6 +9,7 @@ import logging
 import sys
 import json
 from embeddings_generator import get_embeddings
+from parallel_requests import post_articles_in_parallel
 
 custom_module_path = os.path.abspath(os.path.join('secrets'))
 sys.path.append(custom_module_path)
@@ -81,12 +82,20 @@ def coordinator():
     print("final_news_len", len(purified_articles_json["list_of_news"]))
 
     for article_json in purified_articles_json["list_of_news"]:
-        article_json["embedding"] = get_embeddings(article_json["description"])
+        embedding = get_embeddings(article_json["description"])
+        if(embedding is not None):
+            article_json["embedding"] = embedding
+        else:
+            article_json["embedding"] = []
 
+    purified_articles_json = purified_articles_json["list_of_news"] 
+    
     with open('purified_articles.json', 'w') as f:
         json.dump(purified_articles_json, f)
         # name = os.environ.get("NAME", "World")
         # return f"Hello {name}!"
+    
+    post_articles_in_parallel(purified_articles_json)
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ generation_config = {
   "temperature": 1,
   "top_p": 0.95,
   "top_k": 64,
-  "max_output_tokens": 7680,
+  "max_output_tokens": 8192,
   "response_schema": content.Schema(
     type = content.Type.OBJECT,
     enum = [],
@@ -64,7 +64,7 @@ model = genai.GenerativeModel(
   # See https://ai.google.dev/gemini-api/docs/safety-settings
 )
 
-prompt = "Following is a list of cybersecurity news extracted in a raw html format from a website. Your task is to extract only the useful content i.e., cybersecurity news from it. Perform following operations on it:\n1- Remove all the redundant non-human-readable/illegible characters from it like: \"\\n\", \"\\t\", \"\\u00xyz\" etc.\n2- Remove all the promotional content like: \"All rights reserved\", \"Subscribe\", \"Follow my page\", etc.\n3- There are multiple news it. Extract and list them separately.\n4- For each of the purified and extracted news define following:\n a- headline: Headline/Highlight of the news.\n   b- summary: 2 liner summary of the news that uniquely defines the incident.\n   c- description: The actual full description of the news.\n   d- date: The date at which the incident occurred. If not found then return NULL. \n5- Finally return the output in the json format.\n\nFollowing is the list of raw html news:\n"
+prompt = "Following is a list of cybersecurity news extracted in a raw html format from a website. Your task is to extract only the useful content i.e., cybersecurity news from it. Perform following operations on it:\n1- Remove all the redundant non-human-readable/illegible characters from it like: \"\\n\", \"\\t\", \"\\u00xyz\" etc.\n2- Remove all the promotional content like: \"All rights reserved\", \"Subscribe\", \"Follow my page\", etc.\n3- There are multiple news it. Extract and list them separately.\n4- For each of the purified and extracted news define following:\n a- headline: 1 liner Headline/Highlight of the news.\n   b- summary: 2 liner summary of the news that uniquely defines the incident.\n   c- description: The actual description of the news, shorten/summarized such that it remains strictly less than 8000 bytes. \n   d- date: The date at which the incident occurred. If not found then return NULL. \n5- Finally return the output in the json format.\n\nFollowing is the list of raw html news:\n"
 
 
 def get_purified_articles(raw_articels):
