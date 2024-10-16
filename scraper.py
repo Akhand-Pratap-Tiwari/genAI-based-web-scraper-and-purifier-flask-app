@@ -1,3 +1,6 @@
+# Suggested code may be subject to a license. Learn more: ~LicenseLog:420741354.
+# Suggested code may be subject to a license. Learn more: ~LicenseLog:2787885186.
+# Suggested code may be subject to a license. Learn more: ~LicenseLog:2172984445.
 import requests
 from bs4 import BeautifulSoup
 
@@ -21,23 +24,23 @@ def get_article_text(article_url):
         print(f"Error fetching article: {e}")
         return None
     
-def thehackernews_parser(soup):
-    articles = soup.find_all("a", class_="story-link")
-    articles = [article["href"] for article in articles]
-    return articles
+def thehackernews_links_extractor(soup):
+    article_links = soup.find_all("a", class_="story-link")
+    article_links = [article["href"] for article in article_links]
+    return article_links
 
-def cybersecuritynews_parser(soup):
-    articles = soup.find_all("div", {"class": "item-details"})
-    articles = [article.find("a") for article in articles]
-    articles = articles[1:12]
-    articles = [article["href"] for article in articles]
-    return articles
+def cybersecuritynews_links_extractor(soup):
+    article_links = soup.find_all("div", {"class": "item-details"})
+    article_links = [article.find("a") for article in article_links]
+    article_links = article_links[1:12]
+    article_links = [article["href"] for article in article_links]
+    return article_links
 
-def wired_parser(soup):
-    articles = soup.find_all("a", class_="summary-item__hed-link")
-    articles = articles[1:20]
-    articles = ["https://www.wired.com" + article["href"] for article in articles]
-    return articles
+def wired_links_extractor(soup):
+    articles_links = soup.find_all("a", class_="summary-item__hed-link")
+    articles_links = articles_links[1:20]
+    articles_links = ["https://www.wired.com" + article["href"] for article in articles_links]
+    return articles_links
 
 def news_scraper(website_name, url, article_link_scraper_func):
     raw_news_list = []
@@ -59,21 +62,20 @@ def news_scraper(website_name, url, article_link_scraper_func):
     return raw_news_list
 
 def get_raw_articles():
-    news_websites = {
-        "thehackernews.com": ["https://thehackernews.com/", thehackernews_parser],
-        "cybersecuritynews.com": ["https://cybersecuritynews.com/", cybersecuritynews_parser],
-        "wired.com": ["https://www.wired.com/category/security/", wired_parser]
-    }
+    news_websites = [
+        ["thehackernews.com", "https://thehackernews.com/", thehackernews_links_extractor],
+        ["cybersecuritynews.com", "https://cybersecuritynews.com/", cybersecuritynews_links_extractor],
+        ["wired.com", "https://www.wired.com/category/security/", wired_links_extractor]
+    ]
 
     raw_news_list = []
 
-    for website_name, url_and_parser_func in news_websites.items():
+    for website_name, website_url, link_extractor_func in news_websites:
         try:
-            temp = news_scraper(website_name, url_and_parser_func[0], url_and_parser_func[1])
-            # print("Length temp: ", len(temp))
-            raw_news_list.extend(temp)
+            scraped_raw_articles = news_scraper(website_name, website_url, link_extractor_func)
+            raw_news_list.extend(scraped_raw_articles)
         except Exception as e:
-            print(f"Error scraping {url_and_parser_func[0]}: {e}")
+            print(f"Error scraping {website_url}: {e}")
     
-    # print(raw_news_list)
+    print("No. of articles scraped: ", len(raw_news_list))
     return raw_news_list
