@@ -1,10 +1,7 @@
 from purifier import get_purified_articles
-import cosmocloud_api_details as cosmo_secs
 import os
 from scraper import get_raw_articles
 from flask import Flask
-import asyncio
-import aiohttp
 import logging
 import sys
 import json
@@ -63,7 +60,7 @@ def run_purifier(raw_articles_chunks):
             purified_article_json_chunk = json.loads(currResponseTxt)
             purified_articles_chunkified_jsons.append(purified_article_json_chunk)
         except Exception as e:
-            print(f"Error: ", e, f"with {currResponseTxt}")
+            print(f"Error: ", e, f"with article chunk: {currResponseTxt[0:20]}")
             continue
 
     purified_articles_json = dechunkifier(purified_articles_chunkified_jsons)
@@ -97,7 +94,7 @@ def coordinator():
         # name = os.environ.get("NAME", "World")
         # return f"Hello {name}!"
     
-    post_articles_in_parallel(purified_articles_json)
+    post_articles_in_parallel(purified_articles_json, 2)
 
 
 if __name__ == "__main__":

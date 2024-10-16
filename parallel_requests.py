@@ -1,12 +1,11 @@
-import cosmocloud_api_details as cosmo_secs
 import os
 import asyncio
 import aiohttp
-import logging
 import sys
 
 secrets_path = os.path.abspath(os.path.join('secrets'))
 sys.path.append(secrets_path)
+import cosmocloud_api_details as cosmo_secs
 
 headers = cosmo_secs.headers
 url = cosmo_secs.url
@@ -31,11 +30,11 @@ async def post_article(session, url, headers, payload, semaphore):
                 response.raise_for_status()  # Raise an error for non-200 HTTP codes
                 article_id = await response.text()  # Assuming text format response
                 return article_id
-        except aiohttp.ClientError as e:
-            logging.error(f"Request failed for payload {payload}: {e}")
+        except Exception as e:
+            print(f"Request failed for payload {payload['headline']}: {e}")
             return None
 
-async def post_articles_get_ids_parallel(payloads):
+async def run_async_posting(payloads, semaphore):
     """
     Posts multiple articles in parallel and retrieves their IDs.
 
@@ -77,15 +76,15 @@ def post_articles_in_parallel(purified_articles_jsons, limit=1):
     semaphore = asyncio.Semaphore(limit)
 
     # Run the event loop and execute the main function
-    article_ids = asyncio.run(post_articles_get_ids_parallel(payloads))
+    article_ids = asyncio.run(run_async_posting(payloads, semaphore))
 
     # print(purified_news_list)
     len_paj = len(purified_articles_jsons)
     len_pylds = len(payloads)
     len_aids = len(article_ids)
     print("Total Articles: ", len_paj)
-    print("Articles with no embeddings: ", len_paj - len_pylds)
     print("Successfully posted articles: ", len_aids)
-    print("Unsuccessfully posted articles:", len_pylds - len_aids)
+    print("Articles with no embeddings (not considered to be posted): ", len_paj - len_pylds)
+    print("Unsuccessfully posted articles (articles posting attempted but failed): ", len_pylds - len_aids)
 
     return article_ids
