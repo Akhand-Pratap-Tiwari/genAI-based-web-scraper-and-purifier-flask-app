@@ -55,9 +55,11 @@ def run_purifier(raw_articles_chunks):
     print("run_purifier...")
     purified_articles_chunkified_jsons = []
     currResponseTxt = ""
+    chat_session = None
     for raw_article_chunk in raw_articles_chunks:
         try:
-            currResponseTxt = get_purified_articles(raw_article_chunk).text
+            response, chat_session = get_purified_articles(raw_article_chunk, chat_session)
+            currResponseTxt = response.text
             purified_article_json_chunk = json.loads(currResponseTxt)
             purified_articles_chunkified_jsons.append(purified_article_json_chunk)
         except Exception as e:

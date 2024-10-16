@@ -7,7 +7,6 @@ secrets_path = os.path.abspath(os.path.join('secrets'))
 sys.path.append(secrets_path)
 # Import the gemini_api_key module
 import gemini_api_details as gemini_secs
-
 # Configure the Google Generative AI library with the API key
 genai.configure(api_key=gemini_secs.gemini_api_key)
 
