@@ -1,12 +1,12 @@
-import google.generativeai as genai
 import os
 import sys
+import google.generativeai as genai
 # Get the absolute path to the 'secrets' directory
-custom_module_path = os.path.abspath(os.path.join('secrets'))
+secrets_path = os.path.abspath(os.path.join('secrets'))
 # Add the 'secrets' directory to the system path
-sys.path.append(custom_module_path)
+sys.path.append(secrets_path)
 # Import the gemini_api_key module
-import gemini_api_key as gemini_secs
+import gemini_api_details as gemini_secs
 
 # Configure the Google Generative AI library with the API key
 genai.configure(api_key=gemini_secs.gemini_api_key)

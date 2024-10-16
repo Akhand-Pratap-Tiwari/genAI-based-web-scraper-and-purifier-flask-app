@@ -1,13 +1,9 @@
-from purifier import get_purified_articles
 import cosmocloud_api_details as cosmo_secs
 import os
-from scraper import get_raw_articles
-from flask import Flask
 import asyncio
 import aiohttp
 import logging
 import sys
-import json
 
 custom_module_path = os.path.abspath(os.path.join('secrets'))
 sys.path.append(custom_module_path)
