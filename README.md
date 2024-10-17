@@ -30,7 +30,6 @@ This flask app does following in order:
 
 ## How to run:
 - First set up your MongoDB and Cosmocloud connection.
-- Get the api details for Cosmocloud and Gemini API.
 - During Cosmocloud setup use the following schema:
   ```
   {
@@ -42,8 +41,15 @@ This flask app does following in order:
   }
   ```
   Notice that `embedding` field is List of floats
+- Get the api details for Cosmocloud and Gemini API.
+- Put the api details into the appropriate files as described in previous section (make sure to not make them public).
 - Install all requirements mentioned in `requirements.txt`
 - Run `main.py`.
 - Now, send a POST request to `http://your_flask_app_address:your_port/start_coordinator`
 - Server will start working and you can see the stats on the server cmd.
 - Purified articles will be generated and written locally on a json while the same are also written to MongoDB.
+
+## How to run on Google IDX:
+- Open IDX and Fork this repo.
+- Rebuild the environment if necessary.
+- Now, follow the same steps as mentioned in previous section. 
