@@ -10,10 +10,10 @@ Server should run automatically when starting a workspace. To run manually, run:
 ```
 
 ## What this do?
-This flask app does follows in order:
+This flask app does following in order:
 - Scrap raw content from several cybersecurity websites.
 - Purify the raw content using Gemini API.
-- Write the purified content to MongoDB using Cosmocloud API.
+- Write the purified content to MongoDB using Cosmocloud API and to the local JSON file as well.
 
 ## File and Folder Descriptions:
 - `.idx` contains `dev.nix` file that defines the state of Google IDX workspace.
