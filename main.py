@@ -147,6 +147,7 @@ def coordinator():
     purified_articles_jsons = generate_embeddings(purified_articles_jsons)
     
     # 6. Save the purified articles with embeddings to a JSON file
+    # This is for debugging and caching purposes
     with open('purified_articles.json', 'w') as f:
         json.dump(purified_articles_jsons, f)
     
