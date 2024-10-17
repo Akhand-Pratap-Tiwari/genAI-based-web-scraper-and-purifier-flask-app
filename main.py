@@ -60,16 +60,21 @@ def run_purifier(raw_articles_chunks):
             print(f"Error: ", e, f"with article chunk: {currResponseTxt[0:30]}")
             continue
 
-    return purified_articles_json
+    return purified_articles_chunkified_jsons
 
 def generate_embeddings(purified_articles_jsons):
     print("Running Embeddings Generator...")
+    unembedded_count = 0
     for article_json in tqdm(purified_articles_jsons, desc="Generating Embeddings"):
         embedding = get_embeddings(article_json["description"])
         if(embedding is not None):
             article_json["embedding"] = embedding
         else:
             article_json["embedding"] = []
+            unembedded_count += 1
+    print("Unsuccessful embeddings: ", unembedded_count)
+    print("Successfull embeddings: ", len(purified_articles_jsons) - unembedded_count)
+    print("Total articles: ", len(purified_articles_jsons))
     return purified_articles_jsons
 
 @app.route("/")
@@ -83,7 +88,7 @@ def coordinator():
     # Make it into chunks of 3 to process in batch
     # Reduces the number of requests to gemini API
     raw_articles_list_chunkified = chunkify(raw_articles_list, 3)
-    print("Length of raw_articles_list_chunkified", len(raw_articles_list_chunkified))
+    print("Length of raw_articles_list_chunkified: ", len(raw_articles_list_chunkified))
     chunk_lengths = [len(chunk) for chunk in raw_articles_list_chunkified]
     print("Individual chunk lengths:", chunk_lengths)
 
