@@ -7,6 +7,7 @@ import sys
 import json
 from embeddings_generator import get_embeddings
 from parallel_requests import post_articles_in_parallel
+from tqdm import tqdm
 
 custom_module_path = os.path.abspath(os.path.join('secrets'))
 sys.path.append(custom_module_path)
@@ -18,83 +19,92 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
 def run_scraper():
-    print("run_scraper...")
+    print("Running Scraper...")
     raw_articles = get_raw_articles()
     return raw_articles
 
-
-def run_chunkifier(raw_articles):
-    print("run_chunkifier...")
+def chunkify(raw_articles, chunk_size=3):
+    print("Running Chunkifier...")
     raw_articles_chunks = []
     n = len(raw_articles)
-    i = 0
-    while (i <= n-1):
-        if i+2 <= n-1:
-            raw_articles_chunks.append(raw_articles[i:i+3])
+    for i in tqdm(range(0, n, chunk_size), desc="Constructing Raw Articles Chunks"):
+        if i+chunk_size <= n:
+            raw_articles_chunks.append(raw_articles[i:i+chunk_size])
         else:
             raw_articles_chunks.append(raw_articles[i:])
-        i += 3
     return raw_articles_chunks
 
-
-def dechunkifier(chunkified_jsons):
-    print("dechunkifier...")
+def dechunkify(chunkified_jsons):
+    print("Running De-chunkifier...")
     purified_articles_json = {
         "list_of_news": []
     }
-    for news_list_json in chunkified_jsons:
+    for news_list_json in tqdm(chunkified_jsons, desc="Merging Purified Articles"):
         purified_articles_json["list_of_news"].extend(
             news_list_json["list_of_news"])
     return purified_articles_json
 
 
 def run_purifier(raw_articles_chunks):
-    print("run_purifier...")
+    print("Running Purifier...")
     purified_articles_chunkified_jsons = []
     currResponseTxt = ""
     chat_session = None
-    for raw_article_chunk in raw_articles_chunks:
+    for raw_article_chunk in tqdm(raw_articles_chunks, desc="Running Purifier on Chunks"):
         try:
             response, chat_session = get_purified_articles(raw_article_chunk, chat_session)
             currResponseTxt = response.text
             purified_article_json_chunk = json.loads(currResponseTxt)
             purified_articles_chunkified_jsons.append(purified_article_json_chunk)
         except Exception as e:
-            print(f"Error: ", e, f"with article chunk: {currResponseTxt[0:20]}")
+            print(f"Error: ", e, f"with article chunk: {currResponseTxt[0:30]}")
             continue
 
-    purified_articles_json = dechunkifier(purified_articles_chunkified_jsons)
     return purified_articles_json
 
-
-@app.route("/")
-def coordinator():
-    print("coordinator...")
-    raw_articles_list = run_scraper()
-    raw_articles_list_chunkified = run_chunkifier(raw_articles_list)
-    print("Length of raw_articles_list_chunkified", len(raw_articles_list_chunkified))
-    for chunk in raw_articles_list_chunkified:
-        print("Length of chunk: ", len(chunk))
-    purified_articles_json = run_purifier(raw_articles_list_chunkified)
-    
-    print("json_len", len(purified_articles_json))
-    print("final_news_len", len(purified_articles_json["list_of_news"]))
-
-    for article_json in purified_articles_json["list_of_news"]:
+def generate_embeddings(purified_articles_jsons):
+    print("Running Embeddings Generator...")
+    for article_json in tqdm(purified_articles_jsons, desc="Generating Embeddings"):
         embedding = get_embeddings(article_json["description"])
         if(embedding is not None):
             article_json["embedding"] = embedding
         else:
             article_json["embedding"] = []
+    return purified_articles_jsons
 
-    purified_articles_json = purified_articles_json["list_of_news"] 
+@app.route("/")
+def coordinator():
+    print("Running Coordinator...")
     
+    # Get raw articles list
+    raw_articles_list = run_scraper()
+    print("No. of raw articles scraped: ", len(raw_articles_list))
+
+    # Make it into chunks of 3 to process in batch
+    # Reduces the number of requests to gemini API
+    raw_articles_list_chunkified = chunkify(raw_articles_list, 3)
+    print("Length of raw_articles_list_chunkified", len(raw_articles_list_chunkified))
+    chunk_lengths = [len(chunk) for chunk in raw_articles_list_chunkified]
+    print("Individual chunk lengths:", chunk_lengths)
+
+    # Run Purifier to extract the required info in json format using gemini API
+    # Return news in chunks to be merged later
+    purified_articles_json_chunkified = run_purifier(raw_articles_list_chunkified)
+
+    # Run dechunkifier to merge the json chunks into single list
+    purified_articles_jsons = dechunkify(purified_articles_json_chunkified)
+    purified_articles_jsons = purified_articles_jsons["list_of_news"]
+    print("Number of Purified Artciles: ", len(purified_articles_jsons))
+
+    # Generate embeddings for each article
+    purified_articles_jsons = generate_embeddings(purified_articles_jsons)
+    
+    # Dump the final news list into a file
     with open('purified_articles.json', 'w') as f:
-        json.dump(purified_articles_json, f)
-        # name = os.environ.get("NAME", "World")
-        # return f"Hello {name}!"
+        json.dump(purified_articles_jsons, f)
     
-    post_articles_in_parallel(purified_articles_json, 2)
+    # Post all the news concurrently to the database
+    post_articles_in_parallel(purified_articles_jsons, 2)
 
 
 if __name__ == "__main__":

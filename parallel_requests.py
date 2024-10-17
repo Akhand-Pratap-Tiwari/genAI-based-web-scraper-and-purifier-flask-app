@@ -2,6 +2,7 @@ import os
 import asyncio
 import aiohttp
 import sys
+from tqdm import tqdm
 
 secrets_path = os.path.abspath(os.path.join('secrets'))
 sys.path.append(secrets_path)
@@ -31,7 +32,7 @@ async def post_article(session, url, headers, payload, semaphore):
                 article_id = await response.text()  # Assuming text format response
                 return article_id
         except Exception as e:
-            print(f"Request failed for payload {payload['headline']}: {e}")
+            print(f"Request failed for payload: {payload['headline']}: {e}")
             return None
 
 async def run_async_posting(payloads, semaphore):
@@ -47,11 +48,13 @@ async def run_async_posting(payloads, semaphore):
     article_ids = []
     async with aiohttp.ClientSession() as session:
         # Create tasks for all requests
-        tasks = [post_article(session, url, headers, payload, semaphore)
-                 for payload in payloads]
+        # print()
+        tasks = []
+        for payload in tqdm(payloads, desc="Constructing Async Tasks"):
+            tasks.append(post_article(session, url, headers, payload, semaphore))
 
         # Run tasks concurrently, limiting concurrency
-        for task in asyncio.as_completed(tasks):
+        for task in tqdm(asyncio.as_completed(tasks), desc="Running Async Tasks"):
             article_id = await task
             if article_id is not None:
                 article_ids.append(article_id)
@@ -70,7 +73,10 @@ def post_articles_in_parallel(purified_articles_jsons, limit=1):
         A list of article IDs for successfully posted articles.
     """
     # Filter articles with embeddings
-    payloads = [article for article in purified_articles_jsons if article.get("embedding")]
+    payloads = []
+    for article_json in tqdm(purified_articles_jsons, desc="Constructing Payloads"):
+        if article_json.get("embedding"):
+            payloads.append(article_json)
 
     # Create a semaphore to limit concurrency
     semaphore = asyncio.Semaphore(limit)
@@ -82,9 +88,10 @@ def post_articles_in_parallel(purified_articles_jsons, limit=1):
     len_paj = len(purified_articles_jsons)
     len_pylds = len(payloads)
     len_aids = len(article_ids)
+
     print("Total Articles: ", len_paj)
     print("Successfully posted articles: ", len_aids)
-    print("Articles with no embeddings (not considered to be posted): ", len_paj - len_pylds)
+    print("Articles with no embeddings (not considered for posting): ", len_paj - len_pylds)
     print("Unsuccessfully posted articles (articles posting attempted but failed): ", len_pylds - len_aids)
 
     return article_ids

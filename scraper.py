@@ -3,7 +3,7 @@
 # Suggested code may be subject to a license. Learn more: ~LicenseLog:2172984445.
 import requests
 from bs4 import BeautifulSoup
-
+from tqdm import tqdm
 from typing import List, Tuple, Callable
 
 def get_website_soup(url):
@@ -80,6 +80,7 @@ def news_scraper(website_name: str, url: str, article_link_scraper_func: Callabl
 
     Returns a list of article texts, or a list containing an error message if the main page fetch fails.
     """
+    raw_news_list = []
     try:
         soup = get_website_soup(url)
         if(soup is None):
@@ -110,12 +111,10 @@ def get_raw_articles() -> List[str]:
 
     raw_news_list = []
 
-    for website_name, website_url, link_extractor_func in news_websites:
+    for website_name, website_url, link_extractor_func in tqdm(news_websites, desc="Scraping Website"):
         try:
             scraped_raw_articles = news_scraper(website_name, website_url, link_extractor_func)
             raw_news_list.extend(scraped_raw_articles)
         except Exception as e:
             print(f"Error scraping {website_name}: {e}")
-    
-    print("No. of articles scraped: ", len(raw_news_list))
     return raw_news_list
