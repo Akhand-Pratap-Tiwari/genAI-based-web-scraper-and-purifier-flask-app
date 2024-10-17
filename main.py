@@ -1,13 +1,14 @@
 from purifier import get_purified_articles
 import os
 from scraper import get_raw_articles
-from flask import Flask
+from flask import Flask, jsonify
 import logging
 import sys
 import json
 from embeddings_generator import get_embeddings
 from parallel_requests import post_articles_in_parallel
 from tqdm import tqdm
+import datetime
 
 custom_module_path = os.path.abspath(os.path.join('secrets'))
 sys.path.append(custom_module_path)
@@ -117,7 +118,7 @@ def generate_embeddings(purified_articles_jsons):
     print("Total articles:", len(purified_articles_jsons))
     return purified_articles_jsons
 
-@app.route("/start_coordinator")
+@app.route("/start_coordinator", methods=["POST"])
 def coordinator():
     """
     Main function to orchestrate the scraping, purifying, embedding, and posting of news articles.
@@ -152,9 +153,19 @@ def coordinator():
         json.dump(purified_articles_jsons, f)
     
     # 7. Post the articles to the database in parallel for faster processing
-    post_articles_in_parallel(purified_articles_jsons, 2)
+    #    returns article_ids for successfully posted news articles
+    post_articles_in_parallel(purified_articles_jsons, 2, 60)
+
+    response = {
+        'message': 'Scraping job done.',
+        'job_timestamp': datetime.datetime.now()  # Optional job ID
+    }
+
+    return jsonify(response), 202
+
+
 
 
 if __name__ == "__main__":
     # coordinator()
-    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
+    app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
