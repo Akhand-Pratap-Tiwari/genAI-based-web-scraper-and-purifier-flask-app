@@ -117,7 +117,7 @@ def generate_embeddings(purified_articles_jsons):
     print("Total articles:", len(purified_articles_jsons))
     return purified_articles_jsons
 
-@app.route("/")
+@app.route("/start_coordinator")
 def coordinator():
     """
     Main function to orchestrate the scraping, purifying, embedding, and posting of news articles.
@@ -155,5 +155,5 @@ def coordinator():
 
 
 if __name__ == "__main__":
-    coordinator()
-    # app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
+    # coordinator()
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
