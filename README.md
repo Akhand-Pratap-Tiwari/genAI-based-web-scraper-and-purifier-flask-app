@@ -52,4 +52,6 @@ This flask app does following in order:
 ## How to run on Google IDX:
 - Open IDX and Fork this repo.
 - Rebuild the environment if necessary.
-- Now, follow the same steps as mentioned in previous section. 
+- Now, follow the same steps as mentioned in previous section.
+
+### NOTE: On IDX you might want to use virtual environment for pip packages installation.
